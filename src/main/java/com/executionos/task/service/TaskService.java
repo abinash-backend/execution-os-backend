@@ -1,5 +1,7 @@
 package com.executionos.task.service;
 
+import com.executionos.common.util.Priority;
+import com.executionos.common.util.Status;
 import com.executionos.task.dto.TaskRequestDTO;
 import com.executionos.task.dto.TaskResponseDTO;
 
@@ -10,4 +12,5 @@ public interface TaskService {
 
     TaskResponseDTO createTask(TaskRequestDTO request);
     List<TaskResponseDTO> getTasksByUser(UUID userId);
+    List<TaskResponseDTO> getTasksByUser(UUID userId, Status status, Priority priority);
 }

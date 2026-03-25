@@ -2,6 +2,7 @@ package com.executionos.task.service;
 
 import com.executionos.auth.entity.User;
 import com.executionos.auth.repository.UserRepository;
+import com.executionos.common.util.Priority;
 import com.executionos.common.util.Status;
 import com.executionos.task.dto.TaskRequestDTO;
 import com.executionos.task.dto.TaskResponseDTO;
@@ -63,5 +64,28 @@ public class TaskServiceImpl implements TaskService {
         dto.setStatus(task.getStatus());
         dto.setCreatedAt(task.getCreatedAt());
         return dto;
+    }
+
+    @Override
+    public List<TaskResponseDTO> getTasksByUser(UUID userId, Status status, Priority priority) {
+
+        List<Task> tasks;
+
+        if (status != null && priority != null) {
+            tasks = taskRepository.findByUserIdAndStatusAndPriority(userId, status, priority);
+
+        } else if (status != null) {
+            tasks = taskRepository.findByUserIdAndStatus(userId, status);
+
+        } else if (priority != null) {
+            tasks = taskRepository.findByUserIdAndPriority(userId, priority);
+
+        } else {
+            tasks = taskRepository.findByUserId(userId);
+        }
+
+        return tasks.stream()
+                .map(this::mapToDTO)
+                .toList();
     }
 }

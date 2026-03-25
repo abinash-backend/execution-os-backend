@@ -1,5 +1,7 @@
 package com.executionos.task.controller;
 
+import com.executionos.common.util.Priority;
+import com.executionos.common.util.Status;
 import com.executionos.task.dto.TaskRequestDTO;
 import com.executionos.task.dto.TaskResponseDTO;
 import com.executionos.task.service.TaskService;
@@ -30,6 +32,18 @@ public class TaskController {
             @RequestParam UUID userId) {
 
         List<TaskResponseDTO> tasks = taskService.getTasksByUser(userId);
+
+        return ResponseEntity.ok(tasks);
+    }
+
+    @GetMapping
+    public ResponseEntity<List<TaskResponseDTO>> getTasks(
+            @RequestParam UUID userId,
+            @RequestParam(required = false) Status status,
+            @RequestParam(required = false) Priority priority) {
+
+        List<TaskResponseDTO> tasks =
+                taskService.getTasksByUser(userId, status, priority);
 
         return ResponseEntity.ok(tasks);
     }
