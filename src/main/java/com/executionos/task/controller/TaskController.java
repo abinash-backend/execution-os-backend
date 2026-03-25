@@ -29,15 +29,6 @@ public class TaskController {
 
     @GetMapping
     public ResponseEntity<List<TaskResponseDTO>> getTasks(
-            @RequestParam UUID userId) {
-
-        List<TaskResponseDTO> tasks = taskService.getTasksByUser(userId);
-
-        return ResponseEntity.ok(tasks);
-    }
-
-    @GetMapping
-    public ResponseEntity<List<TaskResponseDTO>> getTasks(
             @RequestParam UUID userId,
             @RequestParam(required = false) Status status,
             @RequestParam(required = false) Priority priority) {
