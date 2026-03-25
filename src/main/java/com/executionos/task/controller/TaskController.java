@@ -4,7 +4,11 @@ import com.executionos.task.dto.TaskRequestDTO;
 import com.executionos.task.dto.TaskResponseDTO;
 import com.executionos.task.service.TaskService;
 import jakarta.validation.Valid;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/tasks")
@@ -19,5 +23,14 @@ public class TaskController {
     @PostMapping
     public TaskResponseDTO createTask(@RequestBody @Valid TaskRequestDTO request) {
         return taskService.createTask(request);
+    }
+
+    @GetMapping
+    public ResponseEntity<List<TaskResponseDTO>> getTasks(
+            @RequestParam UUID userId) {
+
+        List<TaskResponseDTO> tasks = taskService.getTasksByUser(userId);
+
+        return ResponseEntity.ok(tasks);
     }
 }
