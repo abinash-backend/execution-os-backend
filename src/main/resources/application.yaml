@@ -1,0 +1,16 @@
+spring:
+  application:
+    name: execution-os-backend
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/execution_os
+    username: execution_user
+    password: secure123
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+server:
+  port: 8080
