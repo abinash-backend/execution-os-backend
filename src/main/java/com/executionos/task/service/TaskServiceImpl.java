@@ -1,4 +1,4 @@
-package com.executionos.task.service.impl;
+package com.executionos.task.service;
 
 import com.executionos.auth.entity.User;
 import com.executionos.auth.repository.UserRepository;
@@ -7,8 +7,10 @@ import com.executionos.task.dto.TaskRequestDTO;
 import com.executionos.task.dto.TaskResponseDTO;
 import com.executionos.task.entity.Task;
 import com.executionos.task.repository.TaskRepository;
-import com.executionos.task.service.TaskService;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.UUID;
 
 @Service
 public class TaskServiceImpl implements TaskService {
@@ -39,6 +41,16 @@ public class TaskServiceImpl implements TaskService {
         Task saved = taskRepository.save(task);
 
         return mapToDTO(saved);
+    }
+
+    @Override
+    public List<TaskResponseDTO> getTasksByUser(UUID userId) {
+
+        List<Task> tasks = taskRepository.findByUserId(userId);
+
+        return tasks.stream()
+                .map(this::mapToDTO)
+                .toList();
     }
 
     private TaskResponseDTO mapToDTO(Task task) {
