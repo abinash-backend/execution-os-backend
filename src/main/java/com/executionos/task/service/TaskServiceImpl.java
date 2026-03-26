@@ -2,14 +2,19 @@ package com.executionos.task.service;
 
 import com.executionos.auth.entity.User;
 import com.executionos.auth.repository.UserRepository;
+import com.executionos.common.util.ExecutionStatus;
 import com.executionos.common.util.Priority;
 import com.executionos.common.util.Status;
+import com.executionos.execution.entity.ExecutionLog;
+import com.executionos.task.dto.StreakResponseDTO;
 import com.executionos.task.dto.TaskRequestDTO;
 import com.executionos.task.dto.TaskResponseDTO;
 import com.executionos.task.entity.Task;
 import com.executionos.task.repository.TaskRepository;
 import org.springframework.stereotype.Service;
+import com.executionos.execution.repository.ExecutionLogRepository;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -18,11 +23,12 @@ public class TaskServiceImpl implements TaskService {
 
     private final TaskRepository taskRepository;
     private final UserRepository userRepository;
-
+    private final ExecutionLogRepository executionLogRepository;
     public TaskServiceImpl(TaskRepository taskRepository,
-                           UserRepository userRepository) {
+                           UserRepository userRepository, ExecutionLogRepository executionLogRepository) {
         this.taskRepository = taskRepository;
         this.userRepository = userRepository;
+        this.executionLogRepository = executionLogRepository;
     }
 
     @Override
@@ -87,5 +93,27 @@ public class TaskServiceImpl implements TaskService {
         return tasks.stream()
                 .map(this::mapToDTO)
                 .toList();
+    }
+    @Override
+    public StreakResponseDTO calculateStreak(UUID taskId) {
+
+
+        List<ExecutionLog> logs =
+                executionLogRepository.findByTaskIdOrderByDateDesc(taskId);
+
+        int streak = 0;
+        LocalDate expectedDate = LocalDate.now();
+
+        for (ExecutionLog log : logs) {
+
+            if (!log.getDate().equals(expectedDate)) break;
+
+            if (log.getStatus() == ExecutionStatus.MISSED) break;
+
+            streak++;
+            expectedDate = expectedDate.minusDays(1);
+        }
+
+        return new StreakResponseDTO(taskId, streak);
     }
 }
