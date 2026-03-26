@@ -12,9 +12,12 @@ import com.executionos.task.dto.TaskRequestDTO;
 import com.executionos.task.dto.TaskResponseDTO;
 import com.executionos.task.entity.Task;
 import com.executionos.task.repository.TaskRepository;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import com.executionos.execution.repository.ExecutionLogRepository;
 
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -146,19 +149,21 @@ public class TaskServiceImpl implements TaskService {
         );
     }
 
+    @Override
+    public List<LeaderboardResponseDTO> getLeaderboard(org.springframework.data.domain.Pageable pageable) {
+        return List.of();
+    }
+
+    @Override
     public List<LeaderboardResponseDTO> getLeaderboard() {
 
         List<User> users = userRepository.findAll();
-
         List<LeaderboardResponseDTO> leaderboard = new ArrayList<>();
 
         for (User user : users) {
 
             List<Task> tasks = taskRepository.findByUserId(user.getId());
-
-            if (tasks.isEmpty()) {
-                continue;
-            }
+            if (tasks.isEmpty()) continue;
 
             double totalConsistency = 0;
             int count = 0;
@@ -194,7 +199,57 @@ public class TaskServiceImpl implements TaskService {
             ));
         }
 
-        // 🔥 SORT DESC
+        leaderboard.sort((a, b) ->
+                Double.compare(b.getConsistencyScore(), a.getConsistencyScore())
+        );
+
+        return leaderboard;
+    }
+
+    @Override
+    public List<LeaderboardResponseDTO> getLeaderboard(int page, int size) {
+
+        Pageable pageable = PageRequest.of(page, size);
+        List<User> users = userRepository.findAll(pageable).getContent();
+
+        List<LeaderboardResponseDTO> leaderboard = new ArrayList<>();
+
+        for (User user : users) {
+
+            List<Task> tasks = taskRepository.findByUserId(user.getId());
+            if (tasks.isEmpty()) continue;
+
+            double totalConsistency = 0;
+            int count = 0;
+
+            for (Task task : tasks) {
+
+                List<ExecutionLog> logs =
+                        executionLogRepository.findByTaskIdOrderByDateDesc(task.getId());
+
+                if (logs.isEmpty()) continue;
+
+                int done = 0;
+
+                for (ExecutionLog log : logs) {
+                    if (log.getStatus() == ExecutionStatus.DONE) {
+                        done++;
+                    }
+                }
+
+                double consistency = ((double) done / logs.size()) * 100;
+
+                totalConsistency += consistency;
+                count++;
+            }
+
+            if (count == 0) continue;
+
+            double avg = totalConsistency / count;
+
+            leaderboard.add(new LeaderboardResponseDTO(user.getId(), avg));
+        }
+
         leaderboard.sort((a, b) ->
                 Double.compare(b.getConsistencyScore(), a.getConsistencyScore())
         );
