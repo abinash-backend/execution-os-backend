@@ -1,15 +1,24 @@
 package com.executionos.task.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.Getter;
 
 import java.util.UUID;
 
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
+@Getter
 public class StreakResponseDTO {
+
     private UUID taskId;
-    private int streak;
+    private int currentStreak;
+    private int longestStreak;
+    private double consistencyScore;
+
+    public StreakResponseDTO(UUID taskId, int currentStreak,
+                             int longestStreak, double consistencyScore) {
+        this.taskId = taskId;
+        this.currentStreak = currentStreak;
+        this.longestStreak = longestStreak;
+        this.consistencyScore = consistencyScore;
+    }
+
+    public StreakResponseDTO() {}
 }
