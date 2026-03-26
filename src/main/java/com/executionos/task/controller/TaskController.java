@@ -2,6 +2,7 @@ package com.executionos.task.controller;
 
 import com.executionos.common.util.Priority;
 import com.executionos.common.util.Status;
+import com.executionos.task.dto.StreakResponseDTO;
 import com.executionos.task.dto.TaskRequestDTO;
 import com.executionos.task.dto.TaskResponseDTO;
 import com.executionos.task.service.TaskService;
@@ -37,5 +38,13 @@ public class TaskController {
                 taskService.getTasksByUser(userId, status, priority);
 
         return ResponseEntity.ok(tasks);
+    }
+
+    @GetMapping("/{taskId}/streak")
+    public ResponseEntity<StreakResponseDTO> getStreak(@PathVariable UUID taskId) {
+
+        StreakResponseDTO response = taskService.calculateStreak(taskId);
+
+        return ResponseEntity.ok(response);
     }
 }
