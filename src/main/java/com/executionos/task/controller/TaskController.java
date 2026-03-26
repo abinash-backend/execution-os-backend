@@ -24,11 +24,16 @@ public class TaskController {
         this.taskService = taskService;
     }
 
+    // ✅ CREATE TASK
     @PostMapping
-    public TaskResponseDTO createTask(@RequestBody @Valid TaskRequestDTO request) {
-        return taskService.createTask(request);
+    public ResponseEntity<TaskResponseDTO> createTask(
+            @RequestBody @Valid TaskRequestDTO request) {
+
+        TaskResponseDTO response = taskService.createTask(request);
+        return ResponseEntity.ok(response);
     }
 
+    // ✅ GET TASKS (FILTERED)
     @GetMapping
     public ResponseEntity<List<TaskResponseDTO>> getTasks(
             @RequestParam UUID userId,
@@ -41,16 +46,24 @@ public class TaskController {
         return ResponseEntity.ok(tasks);
     }
 
+    // ✅ STREAK
     @GetMapping("/{taskId}/streak")
-    public ResponseEntity<StreakResponseDTO> getStreak(@PathVariable UUID taskId) {
+    public ResponseEntity<StreakResponseDTO> getStreak(
+            @PathVariable UUID taskId) {
 
         StreakResponseDTO response = taskService.calculateStreak(taskId);
-
         return ResponseEntity.ok(response);
     }
 
+    // ✅ LEADERBOARD (PAGINATED)
     @GetMapping("/leaderboard")
-    public ResponseEntity<List<LeaderboardResponseDTO>> getLeaderboard() {
-        return ResponseEntity.ok(taskService.getLeaderboard());
+    public ResponseEntity<List<LeaderboardResponseDTO>> getLeaderboard(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int size) {
+
+        List<LeaderboardResponseDTO> leaderboard =
+                taskService.getLeaderboard(page, size);
+
+        return ResponseEntity.ok(leaderboard);
     }
 }
