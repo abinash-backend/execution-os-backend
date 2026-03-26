@@ -2,6 +2,7 @@ package com.executionos.task.controller;
 
 import com.executionos.common.util.Priority;
 import com.executionos.common.util.Status;
+import com.executionos.task.dto.LeaderboardResponseDTO;
 import com.executionos.task.dto.StreakResponseDTO;
 import com.executionos.task.dto.TaskRequestDTO;
 import com.executionos.task.dto.TaskResponseDTO;
@@ -46,5 +47,10 @@ public class TaskController {
         StreakResponseDTO response = taskService.calculateStreak(taskId);
 
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/leaderboard")
+    public ResponseEntity<List<LeaderboardResponseDTO>> getLeaderboard() {
+        return ResponseEntity.ok(taskService.getLeaderboard());
     }
 }

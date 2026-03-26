@@ -6,6 +6,7 @@ import com.executionos.common.util.ExecutionStatus;
 import com.executionos.common.util.Priority;
 import com.executionos.common.util.Status;
 import com.executionos.execution.entity.ExecutionLog;
+import com.executionos.task.dto.LeaderboardResponseDTO;
 import com.executionos.task.dto.StreakResponseDTO;
 import com.executionos.task.dto.TaskRequestDTO;
 import com.executionos.task.dto.TaskResponseDTO;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Service;
 import com.executionos.execution.repository.ExecutionLogRepository;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -142,5 +144,61 @@ public class TaskServiceImpl implements TaskService {
                 longestStreak,
                 consistency
         );
+    }
+
+    public List<LeaderboardResponseDTO> getLeaderboard() {
+
+        List<User> users = userRepository.findAll();
+
+        List<LeaderboardResponseDTO> leaderboard = new ArrayList<>();
+
+        for (User user : users) {
+
+            List<Task> tasks = taskRepository.findByUserId(user.getId());
+
+            if (tasks.isEmpty()) {
+                continue;
+            }
+
+            double totalConsistency = 0;
+            int count = 0;
+
+            for (Task task : tasks) {
+
+                List<ExecutionLog> logs =
+                        executionLogRepository.findByTaskIdOrderByDateDesc(task.getId());
+
+                if (logs.isEmpty()) continue;
+
+                int done = 0;
+
+                for (ExecutionLog log : logs) {
+                    if (log.getStatus() == ExecutionStatus.DONE) {
+                        done++;
+                    }
+                }
+
+                double consistency = ((double) done / logs.size()) * 100;
+
+                totalConsistency += consistency;
+                count++;
+            }
+
+            if (count == 0) continue;
+
+            double avgConsistency = totalConsistency / count;
+
+            leaderboard.add(new LeaderboardResponseDTO(
+                    user.getId(),
+                    avgConsistency
+            ));
+        }
+
+        // 🔥 SORT DESC
+        leaderboard.sort((a, b) ->
+                Double.compare(b.getConsistencyScore(), a.getConsistencyScore())
+        );
+
+        return leaderboard;
     }
 }
