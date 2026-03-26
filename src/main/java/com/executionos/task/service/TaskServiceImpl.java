@@ -94,26 +94,53 @@ public class TaskServiceImpl implements TaskService {
                 .map(this::mapToDTO)
                 .toList();
     }
+
     @Override
     public StreakResponseDTO calculateStreak(UUID taskId) {
-
 
         List<ExecutionLog> logs =
                 executionLogRepository.findByTaskIdOrderByDateDesc(taskId);
 
-        int streak = 0;
+        if (logs.isEmpty()) {
+            return new StreakResponseDTO(taskId, 0, 0, 0);
+        }
+
+        int currentStreak = 0;
+        int longestStreak = 0;
+        int tempStreak = 0;
+        int doneCount = 0;
+
         LocalDate expectedDate = LocalDate.now();
 
+        // ✅ CURRENT STREAK
         for (ExecutionLog log : logs) {
-
             if (!log.getDate().equals(expectedDate)) break;
-
             if (log.getStatus() == ExecutionStatus.MISSED) break;
 
-            streak++;
+            currentStreak++;
             expectedDate = expectedDate.minusDays(1);
         }
 
-        return new StreakResponseDTO(taskId, streak);
+        // ✅ LONGEST STREAK + DONE COUNT
+        for (ExecutionLog log : logs) {
+
+            if (log.getStatus() == ExecutionStatus.DONE) {
+                tempStreak++;
+                doneCount++;
+                longestStreak = Math.max(longestStreak, tempStreak);
+            } else {
+                tempStreak = 0;
+            }
+        }
+
+        // ✅ CONSISTENCY
+        double consistency = ((double) doneCount / logs.size()) * 100;
+
+        return new StreakResponseDTO(
+                taskId,
+                currentStreak,
+                longestStreak,
+                consistency
+        );
     }
 }
