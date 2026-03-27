@@ -13,7 +13,7 @@ import java.util.UUID;
 
 public interface TaskService {
 
-    TaskResponseDTO createTask(TaskRequestDTO request);
+    TaskResponseDTO createTask(TaskRequestDTO request, UUID userId);
 
     List<TaskResponseDTO> getTasksByUser(UUID userId);
 

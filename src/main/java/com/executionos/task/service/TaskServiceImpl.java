@@ -37,9 +37,9 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
-    public TaskResponseDTO createTask(TaskRequestDTO request) {
+    public TaskResponseDTO createTask(TaskRequestDTO request, UUID userId) {
 
-        User user = userRepository.findById(request.getUserId())
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         Task task = new Task();
