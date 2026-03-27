@@ -9,7 +9,14 @@ import com.executionos.task.dto.TaskResponseDTO;
 import com.executionos.task.service.TaskService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 import java.util.UUID;
@@ -29,19 +36,23 @@ public class TaskController {
     public ResponseEntity<TaskResponseDTO> createTask(
             @RequestBody @Valid TaskRequestDTO request) {
 
-        TaskResponseDTO response = taskService.createTask(request);
-        return ResponseEntity.ok(response);
+        String userId = getCurrentUserId();
+
+        TaskResponseDTO response = taskService.createTask(request, UUID.fromString(userId));
+
+        return ResponseEntity.status(201).body(response); // ✅ FIX: 201 CREATED
     }
 
-    // ✅ GET TASKS (FILTERED)
+    // ✅ GET TASKS (SECURE)
     @GetMapping
     public ResponseEntity<List<TaskResponseDTO>> getTasks(
-            @RequestParam UUID userId,
             @RequestParam(required = false) Status status,
             @RequestParam(required = false) Priority priority) {
 
+        String userId = getCurrentUserId();
+
         List<TaskResponseDTO> tasks =
-                taskService.getTasksByUser(userId, status, priority);
+                taskService.getTasksByUser(UUID.fromString(userId), status, priority);
 
         return ResponseEntity.ok(tasks);
     }
@@ -55,7 +66,7 @@ public class TaskController {
         return ResponseEntity.ok(response);
     }
 
-    // ✅ LEADERBOARD (PAGINATED)
+    // ✅ LEADERBOARD
     @GetMapping("/leaderboard")
     public ResponseEntity<List<LeaderboardResponseDTO>> getLeaderboard(
             @RequestParam(defaultValue = "0") int page,
@@ -65,5 +76,13 @@ public class TaskController {
                 taskService.getLeaderboard(page, size);
 
         return ResponseEntity.ok(leaderboard);
+    }
+
+    // 🔐 COMMON METHOD (IMPORTANT)
+    private String getCurrentUserId() {
+        return SecurityContextHolder
+                .getContext()
+                .getAuthentication()
+                .getName();
     }
 }
