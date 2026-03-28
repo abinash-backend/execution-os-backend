@@ -2,6 +2,7 @@ package com.executionos.task.service;
 
 import com.executionos.auth.entity.User;
 import com.executionos.auth.repository.UserRepository;
+import com.executionos.common.exception.ResourceNotFoundException;
 import com.executionos.common.util.ExecutionStatus;
 import com.executionos.common.util.Priority;
 import com.executionos.common.util.Status;
@@ -40,7 +41,7 @@ public class TaskServiceImpl implements TaskService {
     public TaskResponseDTO createTask(TaskRequestDTO request, UUID userId) {
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         Task task = new Task();
         task.setTitle(request.getTitle());
