@@ -1,5 +1,6 @@
 package com.executionos.task.dto;
 
+import com.executionos.common.util.Frequency;
 import com.executionos.common.util.Priority;
 import com.executionos.common.util.Status;
 import lombok.Data;
@@ -14,6 +15,7 @@ public class TaskResponseDTO {
     private UUID id;
     private String title;
     private String description;
+    private Frequency frequency;
     private LocalDate deadline;
     private Priority priority;
     private Status status;

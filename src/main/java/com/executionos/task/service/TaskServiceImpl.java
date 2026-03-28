@@ -2,6 +2,7 @@ package com.executionos.task.service;
 
 import com.executionos.auth.entity.User;
 import com.executionos.auth.repository.UserRepository;
+import com.executionos.common.exception.DuplicateResourceException;
 import com.executionos.common.exception.ResourceNotFoundException;
 import com.executionos.common.util.ExecutionStatus;
 import com.executionos.common.util.Priority;
@@ -39,15 +40,21 @@ public class TaskServiceImpl implements TaskService {
 
     @Override
     public TaskResponseDTO createTask(TaskRequestDTO request, UUID userId) {
+        String normalizedTitle = request.getTitle().trim();
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
+        if (taskRepository.existsByUserIdAndTitleIgnoreCase(userId, normalizedTitle)) {
+            throw new DuplicateResourceException("Task with the same title already exists");
+        }
+
         Task task = new Task();
-        task.setTitle(request.getTitle());
-        task.setDescription(request.getDescription());
+        task.setTitle(normalizedTitle);
+        task.setDescription(request.getDescription() == null ? null : request.getDescription().trim());
+        task.setFrequency(request.getFrequency());
         task.setDeadline(request.getDeadline());
-        task.setPriority(request.getPriority());
+        task.setPriority(request.getPriority() != null ? request.getPriority() : Priority.MEDIUM);
         task.setStatus(Status.PENDING);
         task.setUser(user);
 
@@ -71,6 +78,7 @@ public class TaskServiceImpl implements TaskService {
         dto.setId(task.getId());
         dto.setTitle(task.getTitle());
         dto.setDescription(task.getDescription());
+        dto.setFrequency(task.getFrequency());
         dto.setDeadline(task.getDeadline());
         dto.setPriority(task.getPriority());
         dto.setStatus(task.getStatus());

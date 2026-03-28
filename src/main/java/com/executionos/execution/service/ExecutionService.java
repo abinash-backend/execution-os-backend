@@ -1,5 +1,6 @@
 package com.executionos.execution.service;
 
+import com.executionos.common.exception.ForbiddenException;
 import com.executionos.common.exception.ResourceNotFoundException;
 import com.executionos.execution.dto.ExecutionRequestDTO;
 import com.executionos.execution.dto.ExecutionResponseDTO;
@@ -37,7 +38,7 @@ public class ExecutionService {
 
         // ✅ 2. Ownership Validation (CRITICAL)
         if (!task.getUser().getId().toString().equals(userId)) {
-            throw new RuntimeException("Unauthorized access");
+            throw new ForbiddenException("You do not own this task");
         }
 
         LocalDate today = LocalDate.now();

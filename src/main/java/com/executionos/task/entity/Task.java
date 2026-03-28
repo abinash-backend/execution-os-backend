@@ -1,6 +1,7 @@
 package com.executionos.task.entity;
 
 import com.executionos.auth.entity.User;
+import com.executionos.common.util.Frequency;
 import com.executionos.common.util.Priority;
 import com.executionos.common.util.Status;
 import jakarta.persistence.*;
@@ -26,7 +27,9 @@ public class Task {
 
     private String description;
 
-    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    private Frequency frequency;
+
     private LocalDate deadline;
 
     @Enumerated(EnumType.STRING)
