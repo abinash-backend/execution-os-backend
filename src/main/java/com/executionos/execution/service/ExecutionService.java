@@ -1,5 +1,7 @@
 package com.executionos.execution.service;
 
+import com.executionos.common.exception.ForbiddenException;
+import com.executionos.common.exception.ResourceNotFoundException;
 import com.executionos.execution.dto.ExecutionRequestDTO;
 import com.executionos.execution.dto.ExecutionResponseDTO;
 import com.executionos.execution.entity.ExecutionLog;
@@ -32,11 +34,11 @@ public class ExecutionService {
 
         // ✅ 1. Validate Task Exists
         Task task = taskRepository.findById(taskId)
-                .orElseThrow(() -> new RuntimeException("Task not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Task not found"));
 
         // ✅ 2. Ownership Validation (CRITICAL)
         if (!task.getUser().getId().toString().equals(userId)) {
-            throw new RuntimeException("Unauthorized access");
+            throw new ForbiddenException("You do not own this task");
         }
 
         LocalDate today = LocalDate.now();
@@ -76,7 +78,7 @@ public class ExecutionService {
 
         // ✅ Validate Task Exists
         Task task = taskRepository.findById(taskId)
-                .orElseThrow(() -> new RuntimeException("Task not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Task not found"));
 
         // ✅ Ownership Check
         if (!task.getUser().getId().toString().equals(userId)) {

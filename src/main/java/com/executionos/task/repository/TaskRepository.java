@@ -2,7 +2,6 @@ package com.executionos.task.repository;
 
 import com.executionos.common.util.Priority;
 import com.executionos.common.util.Status;
-import com.executionos.execution.entity.ExecutionLog;
 import com.executionos.task.entity.Task;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -18,6 +17,6 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
 
     List<Task> findByUserIdAndStatusAndPriority(UUID userId, Status status, Priority priority);
 
-
+    boolean existsByUserIdAndTitleIgnoreCase(UUID userId, String title);
 
 }
