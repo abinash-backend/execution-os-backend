@@ -8,6 +8,7 @@ import com.executionos.execution.entity.ExecutionLog;
 import com.executionos.execution.repository.ExecutionRepository;
 import com.executionos.task.entity.Task;
 import com.executionos.task.repository.TaskRepository;
+
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
@@ -27,44 +28,42 @@ public class ExecutionService {
         this.taskRepository = taskRepository;
     }
 
-    // ✅ MARK EXECUTION (SECURE + SAFE)
+    // MARK EXECUTION
     public ExecutionResponseDTO markExecution(UUID taskId,
                                               ExecutionRequestDTO request,
                                               String userId) {
 
-        // ✅ 1. Validate Task Exists
+        // 1. Validate task exists
         Task task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new ResourceNotFoundException("Task not found"));
 
-        // ✅ 2. Ownership Validation (CRITICAL)
+        // 2. Ownership validation
         if (!task.getUser().getId().toString().equals(userId)) {
             throw new ForbiddenException("You do not own this task");
         }
 
         LocalDate today = LocalDate.now();
 
-        // ⚠️ 3. Duplicate Check (still needed, but DB is final authority)
-        boolean exists = executionRepository
-                .existsByTaskIdAndDate(taskId, today);
+        // 3. Duplicate check
+        boolean exists = executionRepository.existsByTaskAndDate(task, today);
 
         if (exists) {
             throw new RuntimeException("Execution already logged for today");
         }
 
-        // ✅ 4. Save Execution
+        // 4. Save execution
         ExecutionLog log = new ExecutionLog();
-        log.setTaskId(taskId); // (we will improve later → @ManyToOne)
+        log.setTask(task);        // ← relation instead of UUID
         log.setDate(today);
         log.setStatus(request.getStatus());
 
         try {
             executionRepository.save(log);
         } catch (DataIntegrityViolationException e) {
-            // ✅ Handles race condition safely
             throw new RuntimeException("Execution already exists for today");
         }
 
-        // ✅ 5. Return Response (important)
+        // 5. Build response
         ExecutionResponseDTO response = new ExecutionResponseDTO();
         response.setDate(log.getDate());
         response.setStatus(log.getStatus());
@@ -72,20 +71,20 @@ public class ExecutionService {
         return response;
     }
 
-    // ✅ GET LOGS (SECURE)
+    // GET EXECUTION LOGS
     public List<ExecutionResponseDTO> getExecutionLogs(UUID taskId,
                                                        String userId) {
 
-        // ✅ Validate Task Exists
+        // Validate task exists
         Task task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new ResourceNotFoundException("Task not found"));
 
-        // ✅ Ownership Check
+        // Ownership validation
         if (!task.getUser().getId().toString().equals(userId)) {
-            throw new RuntimeException("Unauthorized access");
+            throw new ForbiddenException("You do not own this task");
         }
 
-        return executionRepository.findByTaskId(taskId)
+        return executionRepository.findByTask(task)
                 .stream()
                 .map(log -> {
                     ExecutionResponseDTO dto = new ExecutionResponseDTO();
