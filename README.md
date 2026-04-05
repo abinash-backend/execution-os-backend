@@ -1,148 +1,356 @@
 # Execution OS Backend
 
-Spring Boot backend for tracking tasks, daily execution logs, consistency streaks, and leaderboard performance.
+`execution-os-backend` is a Spring Boot 3 REST API for user authentication, task tracking, daily execution logging, streak calculation, and consistency leaderboards.
 
-## What It Solves
+The codebase is organized as a layered monolith with `controller`, `service`, `repository`, `entity`, `dto`, and shared `common` packages.
 
-This project is built for products that need to:
-
-- create and manage user tasks
-- record daily execution/completion status
-- prevent duplicate daily logs
-- calculate streaks and consistency
-- secure user data with JWT authentication
-
-It fits habit-tracking products, internal productivity systems, and execution dashboards.
-
-## Architecture
-
-This application uses a layered monolith structure:
-
-- `controller` for HTTP endpoints
-- `service` for business logic
-- `repository` for database access
-- `entity` for persistence models
-- `dto` for API request/response models
-- `common` for shared enums, security, and configuration
-
-## Tech Stack
+## Stack
 
 - Java 17
-- Spring Boot
+- Spring Boot 3
 - Spring Web
-- Spring Data JPA / Hibernate
+- Spring Data JPA
 - Spring Security
-- JWT
 - PostgreSQL
+- JWT (`jjwt`)
 - Maven
 - Lombok
 
-## Core Features
+## What The Application Does
 
-- User registration and login
-- JWT-based stateless authentication
-- Authenticated task creation
-- Task filtering by status and priority
-- Daily execution logging
-- Duplicate execution prevention per task per day
-- Streak calculation
-- Leaderboard and consistency scoring
+- Registers users with a BCrypt-hashed password
+- Authenticates users and returns a JWT token
+- Creates tasks scoped to the authenticated user
+- Lists tasks with optional `status` and `priority` filters
+- Records one execution log per task per day
+- Calculates current streak, longest streak, and consistency percentage
+- Builds a leaderboard from average task consistency per user
 
-## API Overview
+## Project Structure
 
-### Authentication
+```text
+src/main/java/com/executionos
+|-- auth
+|   |-- controller
+|   |-- entity
+|   `-- repository
+|-- common
+|   |-- config
+|   |-- exception
+|   |-- security
+|   `-- util
+|-- execution
+|   |-- controller
+|   |-- dto
+|   |-- entity
+|   |-- repository
+|   `-- service
+`-- task
+    |-- controller
+    |-- dto
+    |-- entity
+    |-- repository
+    `-- service
+```
 
-- `POST /api/v1/auth/register`
-- `POST /api/v1/auth/login`
+## Configuration
 
-### Tasks
+Application settings are in [`src/main/resources/application.yaml`](/C:/Users/Abinash/Downloads/execution-os-backend/src/main/resources/application.yaml).
 
-- `POST /api/v1/tasks`
-- `GET /api/v1/tasks`
-- `GET /api/v1/tasks/{taskId}/streak`
-- `GET /api/v1/tasks/leaderboard`
+Default local configuration:
 
-### Execution
+```yaml
+server:
+  port: 8080
 
-- `POST /api/v1/tasks/{taskId}/execution`
-- `GET /api/v1/tasks/{taskId}/execution`
-
-## Example Flow
-
-1. Register a user
-2. Login and get JWT token
-3. Send `Authorization: Bearer <token>`
-4. Create tasks
-5. Log daily execution
-6. Fetch streak and leaderboard metrics
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/execution_os
+    username: execution_user
+    password: secure123
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+```
 
 ## Local Setup
 
 ### Prerequisites
 
-- Java 17+
-- Maven
+- JDK 17
 - PostgreSQL
 
 ### Database
 
-Create a PostgreSQL database and configure credentials in `src/main/resources/application.yaml`.
+Create the database and user used by `application.yaml`, or change the config before starting:
 
-Current defaults:
-
-- database: `execution_os`
-- username: `execution_user`
-- password: `secure123`
+```sql
+CREATE DATABASE execution_os;
+CREATE USER execution_user WITH PASSWORD 'secure123';
+GRANT ALL PRIVILEGES ON DATABASE execution_os TO execution_user;
+```
 
 ### Run
 
 ```powershell
-./mvnw.cmd spring-boot:run
+.\mvnw.cmd spring-boot:run
 ```
+
+The API starts on `http://localhost:8080`.
 
 ### Test
 
 ```powershell
-./mvnw.cmd test
+.\mvnw.cmd test
 ```
 
-## Example Request
+## Authentication
 
-### Create Task
+All endpoints except `/api/v1/auth/**` require:
 
 ```http
-POST /api/v1/tasks
-Authorization: Bearer <token>
-Content-Type: application/json
+Authorization: Bearer <jwt-token>
+```
 
+The JWT subject is the user UUID and the token lifetime is 24 hours.
+
+## Domain Model
+
+### User
+
+- `id: UUID`
+- `email: String`
+- `password: String`
+- `createdAt: LocalDateTime`
+
+### Task
+
+- `id: UUID`
+- `title: String`
+- `description: String | null`
+- `frequency: DAILY | WEEKLY | MONTHLY`
+- `deadline: LocalDate | null`
+- `priority: LOW | MEDIUM | HIGH`
+- `status: PENDING | DONE | FAILED`
+- `createdAt: LocalDateTime`
+
+### Execution Log
+
+- `id: UUID`
+- `task: Task`
+- `date: LocalDate`
+- `status: DONE | MISSED`
+
+The database enforces one execution log per `task_id` and `date`.
+
+## API
+
+### Auth
+
+#### `POST /api/v1/auth/register`
+
+Request body:
+
+```json
+{
+  "email": "user@example.com",
+  "password": "secret123"
+}
+```
+
+Response:
+
+```text
+User registered
+```
+
+#### `POST /api/v1/auth/login`
+
+Request body:
+
+```json
+{
+  "email": "user@example.com",
+  "password": "secret123"
+}
+```
+
+Response:
+
+```text
+<jwt-token>
+```
+
+### Tasks
+
+#### `POST /api/v1/tasks`
+
+Creates a task for the authenticated user.
+
+Request body:
+
+```json
 {
   "title": "Write daily report",
   "description": "Submit progress report before 6 PM",
-  "deadline": "2026-03-30",
+  "frequency": "DAILY",
+  "deadline": "2026-04-30",
   "priority": "HIGH"
 }
 ```
 
-## Current Gaps
+Notes:
 
-This project is functional as an MVP, but the next production-readiness steps are:
+- `title` is required and trimmed before save
+- `frequency` is required
+- `priority` defaults to `MEDIUM` if omitted
+- `status` is always created as `PENDING`
+- duplicate titles are blocked per user, case-insensitively
 
-- add global exception handling
-- add OpenAPI / Swagger documentation
-- move secrets to environment variables
-- add unit and integration tests
+Response:
+
+```json
+{
+  "id": "task-uuid",
+  "title": "Write daily report",
+  "description": "Submit progress report before 6 PM",
+  "frequency": "DAILY",
+  "deadline": "2026-04-30",
+  "priority": "HIGH",
+  "status": "PENDING",
+  "createdAt": "2026-04-06T10:00:00"
+}
+```
+
+#### `GET /api/v1/tasks`
+
+Returns the authenticated user's tasks.
+
+Optional query parameters:
+
+- `status=PENDING|DONE|FAILED`
+- `priority=LOW|MEDIUM|HIGH`
+
+Example:
+
+```http
+GET /api/v1/tasks?status=PENDING&priority=HIGH
+```
+
+#### `GET /api/v1/tasks/{taskId}/streak`
+
+Returns streak metrics for a task:
+
+```json
+{
+  "taskId": "task-uuid",
+  "currentStreak": 3,
+  "longestStreak": 7,
+  "consistency": 75.0
+}
+```
+
+#### `GET /api/v1/tasks/leaderboard?page=0&size=5`
+
+Returns a consistency leaderboard:
+
+```json
+[
+  {
+    "userId": "user-uuid",
+    "consistencyScore": 82.5
+  }
+]
+```
+
+### Execution Logs
+
+#### `POST /api/v1/tasks/{taskId}/execution`
+
+Creates today's execution log for the task owned by the authenticated user.
+
+Request body:
+
+```json
+{
+  "status": "DONE"
+}
+```
+
+Allowed values:
+
+- `DONE`
+- `MISSED`
+
+Response:
+
+```json
+{
+  "date": "2026-04-06",
+  "status": "DONE"
+}
+```
+
+#### `GET /api/v1/tasks/{taskId}/execution`
+
+Returns all execution logs for the task owned by the authenticated user.
+
+Response:
+
+```json
+[
+  {
+    "date": "2026-04-04",
+    "status": "DONE"
+  },
+  {
+    "date": "2026-04-05",
+    "status": "MISSED"
+  }
+]
+```
+
+## Error Handling
+
+Global exception handling returns a structured payload for common failures:
+
+```json
+{
+  "status": 400,
+  "message": "Invalid request payload",
+  "method": "POST",
+  "path": "/api/v1/tasks"
+}
+```
+
+Implemented mappings include:
+
+- `400 Bad Request` for validation, enum parsing, and malformed payloads
+- `401 Unauthorized` for invalid login credentials
+- `403 Forbidden` for cross-user task access
+- `404 Not Found` when a user or task does not exist
+- `409 Conflict` for duplicate tasks and data integrity conflicts
+- `500 Internal Server Error` for unhandled runtime failures
+
+## Codebase Notes
+
+This README reflects the code currently in the repository, including a few implementation details worth knowing:
+
+- registration does not currently block duplicate emails before hitting the database constraint
+- auth responses are plain strings, not JSON objects
+- there are no update or delete endpoints for tasks
+- execution logs are always written for `LocalDate.now()`; clients cannot submit a custom date
+- task streak lookup does not verify task ownership before computing metrics
+- leaderboard pagination is applied before global sorting, so it is page-scoped rather than a true global ranking
+- the JWT secret is hardcoded in the application code
+- schema management currently relies on `spring.jpa.hibernate.ddl-auto=update`
+
+## Suggested Next Steps
+
+- move database and JWT secrets to environment-based configuration
 - add Flyway or Liquibase migrations
-- refactor execution logs to use a relational task reference
-
-## Freelance Positioning
-
-This project demonstrates:
-
-- Spring Boot backend development
-- REST API implementation
-- PostgreSQL schema design
-- JWT authentication
-- service-layer business logic
-- backend bug fixing and feature development
-
-It is suitable as a portfolio sample for backend freelance work involving APIs, internal tools, and MVP systems.
+- add DTOs for auth requests and responses
+- add update and delete task endpoints
+- secure streak queries with ownership checks
+- expand automated tests beyond the default application context test
