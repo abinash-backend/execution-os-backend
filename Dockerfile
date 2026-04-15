@@ -5,19 +5,23 @@ WORKDIR /workspace
 COPY .mvn/ .mvn/
 COPY mvnw pom.xml ./
 
-RUN sed -i 's/\r$//' mvnw && chmod +x mvnw
+RUN chmod +x mvnw
+RUN ./mvnw -B dependency:go-offline
 
 COPY src/ src/
 
-RUN ./mvnw clean package -DskipTests
+RUN ./mvnw -B clean package -DskipTests
 
-
-FROM eclipse-temurin:17-jre-jammy
+FROM eclipse-temurin:17-jre-jammy AS runtime
 
 WORKDIR /app
 
-COPY --from=build /workspace/target/*.jar app.jar
+RUN groupadd --system spring && useradd --system --gid spring spring
+
+COPY --from=build /workspace/target/execution-os-backend-0.0.1-SNAPSHOT.jar /app/app.jar
 
 EXPOSE 8080
 
-CMD ["java", "-jar", "app.jar"]
+USER spring:spring
+
+ENTRYPOINT ["java", "-jar", "/app/app.jar"]

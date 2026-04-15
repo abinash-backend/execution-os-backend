@@ -383,16 +383,50 @@ On Windows:
 
 ## CI Pipeline
 
-The repository is **CI-ready**, but a GitHub Actions workflow is not currently committed in this codebase.
+The repository includes a GitHub Actions workflow at `.github/workflows/docker-ci.yml`.
 
-A typical backend CI pipeline for this project should include:
+Pipeline flow:
 
-1. Checkout source
-2. Set up Java 17
-3. Run Maven tests
-4. Build the Spring Boot JAR
-5. Build the Docker image
-6. Optionally publish the image to a container registry
+`Local Development -> GitHub Repository -> GitHub Actions -> Maven Build/Test -> Docker Build -> Docker Hub -> Render`
+
+On every push to `main`, GitHub Actions will:
+
+1. Checkout the repository
+2. Set up Java 17 with Maven dependency caching
+3. Run `./mvnw -B clean verify`
+4. Build the Docker image from the root `Dockerfile`
+5. Log in to Docker Hub using repository secrets
+6. Push the image as `<dockerhub-username>/execution-os-backend:latest`
+
+### Required GitHub Secrets
+
+Configure these repository secrets under `Settings -> Secrets and variables -> Actions`:
+
+| Secret | Purpose |
+| --- | --- |
+| `DOCKER_USERNAME` | Docker Hub username |
+| `DOCKER_PASSWORD` | Docker Hub password or access token |
+
+### Render Deployment From Docker Hub
+
+To deploy this backend on Render using the Docker Hub image:
+
+1. Push code to the `main` branch so GitHub Actions publishes the image
+2. Open Render and create a new `Web Service`
+3. Choose `Deploy an existing image from a registry`
+4. Set the image to `<dockerhub-username>/execution-os-backend:latest`
+5. Set the service port to `8080`
+6. Add required environment variables such as:
+   - `SPRING_DATASOURCE_URL`
+   - `SPRING_DATASOURCE_USERNAME`
+   - `SPRING_DATASOURCE_PASSWORD`
+   - `SPRING_JPA_HIBERNATE_DDL_AUTO`
+   - `PORT=8080`
+7. Deploy the service and enable auto-deploy or manual redeploys as needed when a new image is pushed
+
+Render will pull the latest Docker image from Docker Hub and start the container with:
+
+`java -jar /app/app.jar`
 
 ---
 
