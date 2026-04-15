@@ -3,17 +3,17 @@ spring:
     name: execution-os-backend
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/execution_os
-    username: execution_user
-    password: secure123
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/execution_os}
+    username: ${SPRING_DATASOURCE_USERNAME:execution_user}
+    password: ${SPRING_DATASOURCE_PASSWORD:secure123}
 
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:update}
     show-sql: true
 
 server:
-  port: 8080
+  port: ${PORT:8080}
 
 springdoc:
   swagger-ui:
