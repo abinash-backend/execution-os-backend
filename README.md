@@ -1,356 +1,414 @@
 # Execution OS Backend
 
-`execution-os-backend` is a Spring Boot 3 REST API for user authentication, task tracking, daily execution logging, streak calculation, and consistency leaderboards.
+![Java](https://img.shields.io/badge/Java-17-orange?style=for-the-badge&logo=openjdk)
+![Spring Boot](https://img.shields.io/badge/Spring_Boot-3-brightgreen?style=for-the-badge&logo=springboot)
+![Spring Security](https://img.shields.io/badge/Spring_Security-JWT%20Secured-6DB33F?style=for-the-badge&logo=springsecurity)
+![JWT](https://img.shields.io/badge/Auth-JWT-blue?style=for-the-badge&logo=jsonwebtokens)
+![Database](https://img.shields.io/badge/Database-PostgreSQL-4169E1?style=for-the-badge&logo=postgresql)
+![Build](https://img.shields.io/badge/Build-Maven-C71A36?style=for-the-badge&logo=apachemaven)
+![API Docs](https://img.shields.io/badge/API-Swagger%20%2F%20OpenAPI-85EA2D?style=for-the-badge&logo=swagger)
+![Testing](https://img.shields.io/badge/Tests-JUnit5%20%7C%20Mockito%20%7C%20MockMvc-25A162?style=for-the-badge)
+![Docker](https://img.shields.io/badge/Container-Docker-2496ED?style=for-the-badge&logo=docker)
 
-The codebase is organized as a layered monolith with `controller`, `service`, `repository`, `entity`, `dto`, and shared `common` packages.
+---
 
-## Stack
+## About
 
-- Java 17
-- Spring Boot 3
-- Spring Web
-- Spring Data JPA
-- Spring Security
-- PostgreSQL
-- JWT (`jjwt`)
-- Maven
-- Lombok
+**Execution OS Backend** is a Spring Boot 3 REST API for personal execution tracking. It provides secure APIs for user authentication, task management, daily execution logging, streak analytics, and leaderboard generation.
 
-## What The Application Does
+The project follows a **modular monolith** approach with clear domain separation and layered backend structure. It is designed as a backend-first system with JWT-based security, PostgreSQL persistence, Swagger documentation, test coverage, and containerized local deployment.
 
-- Registers users with a BCrypt-hashed password
-- Authenticates users and returns a JWT token
-- Creates tasks scoped to the authenticated user
-- Lists tasks with optional `status` and `priority` filters
-- Records one execution log per task per day
-- Calculates current streak, longest streak, and consistency percentage
-- Builds a leaderboard from average task consistency per user
+---
+
+## Architecture Overview
+
+The application is organized as a **layered modular monolith**, where each business capability is grouped into its own package while remaining inside one deployable Spring Boot application.
+
+### Core Architectural Principles
+
+- Domain-oriented package structure
+- Layered separation of controller, service, repository, and persistence concerns
+- Shared infrastructure for security, configuration, and exception handling
+- Stateless JWT authentication
+- API-first REST design
+
+### Layered Structure
+
+`Controller -> Service -> Repository -> Database`
+
+- `Controller` handles HTTP requests and response mapping
+- `Service` contains business logic and orchestration
+- `Repository` handles data access through Spring Data JPA
+- `Database` persists application state in PostgreSQL
+
+---
+
+## Domain Modules
+
+| Module | Responsibility |
+| --- | --- |
+| `auth` | User registration, login, password encoding, and JWT issuance |
+| `task` | Task creation, retrieval, filtering, streak calculation, and leaderboard computation |
+| `execution` | Daily execution logging, duplicate-per-day prevention, and execution history retrieval |
+| `common` | Shared configuration, JWT security, exception handling, and utility enums |
+
+---
+
+## System Diagram
+
+```text
+                          +------------------------------+
+                          |        Client Apps           |
+                          |   Web / Mobile / Postman     |
+                          +--------------+---------------+
+                                         |
+                                         v
+                          +------------------------------+
+                          |  Spring Security + JWT Filter|
+                          +--------------+---------------+
+                                         |
+                                         v
+                          +------------------------------+
+                          |      REST Controllers        |
+                          +--------------+---------------+
+                                         |
+                                         v
+        +-------------------------------------------------------------------+
+        |                         Service Layer                             |
+        |      auth      |      task      |    execution    |    common     |
+        +----------------+----------------+-----------------+---------------+
+                                         |
+                                         v
+                          +------------------------------+
+                          |   Spring Data JPA Repos      |
+                          +--------------+---------------+
+                                         |
+                                         v
+                          +------------------------------+
+                          |      PostgreSQL Database     |
+                          +------------------------------+
+```
+
+---
+
+## Request Flow
+
+### Task Creation Flow
+
+```text
+Client
+  |
+  v
+JWT Authenticated Request
+  |
+  v
+Task Controller
+  |
+  v
+Task Service
+  |
+  +--> Resolve Authenticated User
+  |
+  +--> Validate Duplicate Task Title
+  |
+  +--> Build Task
+  |
+  +--> Persist Task
+  |
+  v
+Task Repository
+  |
+  v
+PostgreSQL Database
+  |
+  v
+API Response
+```
+
+### Execution Logging Flow
+
+```text
+User Request -> JWT Validation -> Execution Controller -> Execution Service
+             -> Validate Task Ownership -> Prevent Same-Day Duplicate Log
+             -> Save Execution Log -> Return Response
+```
+
+---
+
+## Tech Stack
+
+| Category | Technologies |
+| --- | --- |
+| Language | Java 17 |
+| Framework | Spring Boot 3 |
+| Security | Spring Security, JWT Authentication |
+| Persistence | Spring Data JPA, Hibernate |
+| Database | PostgreSQL |
+| Build Tool | Maven Wrapper |
+| API Documentation | Swagger / OpenAPI via Springdoc |
+| Testing | JUnit 5, Mockito, MockMvc |
+| Containerization | Docker, Docker Compose |
+
+---
+
+## Features
+
+### Core Features
+
+- User registration and login
+- JWT-based stateless authentication
+- Protected task and execution APIs
+- Create tasks for authenticated users
+- Retrieve tasks with optional `status` and `priority` filters
+- Track daily execution logs
+- Prevent duplicate execution logs for the same task on the same day
+- Calculate streak and consistency metrics
+- Generate user consistency leaderboard
+
+### Backend Engineering Features
+
+- Global exception handling
+- DTO-based API contracts
+- Controller layer tests with MockMvc
+- Service layer unit tests with Mockito
+- Swagger UI integration
+- Multi-stage Docker build
+- Docker Compose setup with PostgreSQL health checks
+
+---
+
+## Swagger Docs
+
+Swagger UI is available at:
+
+`http://localhost:8080/swagger-ui.html`
+
+OpenAPI JSON is available at:
+
+`http://localhost:8080/v3/api-docs`
+
+---
+
+## Docker Setup
+
+The project includes:
+
+- Multi-stage `Dockerfile`
+- `docker-compose.yml` for backend + PostgreSQL
+- Persistent PostgreSQL volume
+- Database health check using `pg_isready`
+- Spring datasource configuration through environment variables
+
+Run the full system with:
+
+```bash
+docker compose up --build
+```
+
+Stop it with:
+
+```bash
+docker compose down
+```
+
+---
 
 ## Project Structure
 
 ```text
-src/main/java/com/executionos
-|-- auth
-|   |-- controller
-|   |-- entity
-|   `-- repository
-|-- common
-|   |-- config
-|   |-- exception
-|   |-- security
-|   `-- util
-|-- execution
-|   |-- controller
-|   |-- dto
-|   |-- entity
-|   |-- repository
-|   `-- service
-`-- task
-    |-- controller
-    |-- dto
-    |-- entity
-    |-- repository
-    `-- service
+execution-os-backend/
+|-- .mvn/
+|-- src/
+|   |-- main/
+|   |   |-- java/
+|   |   |   `-- com/
+|   |   |       `-- executionos/
+|   |   |           |-- auth/
+|   |   |           |-- common/
+|   |   |           |-- execution/
+|   |   |           |-- task/
+|   |   |           `-- ExecutionOsBackendApplication.java
+|   |   `-- resources/
+|   |       `-- application.yaml
+|   `-- test/
+|       `-- java/
+|           `-- com/
+|               `-- executionos/
+|                   |-- auth/controller/
+|                   |-- execution/controller/
+|                   |-- execution/service/
+|                   |-- task/controller/
+|                   `-- task/service/
+|-- .dockerignore
+|-- Dockerfile
+|-- docker-compose.yml
+|-- pom.xml
+|-- mvnw
+|-- mvnw.cmd
+`-- README.md
 ```
 
-## Configuration
+---
 
-Application settings are in [`src/main/resources/application.yaml`](/C:/Users/Abinash/Downloads/execution-os-backend/src/main/resources/application.yaml).
-
-Default local configuration:
-
-```yaml
-server:
-  port: 8080
-
-spring:
-  datasource:
-    url: jdbc:postgresql://localhost:5432/execution_os
-    username: execution_user
-    password: secure123
-  jpa:
-    hibernate:
-      ddl-auto: update
-    show-sql: true
-```
-
-## Local Setup
+## Getting Started
 
 ### Prerequisites
 
-- JDK 17
+- Java 17
 - PostgreSQL
+- Docker Desktop or Docker Engine
 
-### Database
+### Clone Repository
 
-Create the database and user used by `application.yaml`, or change the config before starting:
-
-```sql
-CREATE DATABASE execution_os;
-CREATE USER execution_user WITH PASSWORD 'secure123';
-GRANT ALL PRIVILEGES ON DATABASE execution_os TO execution_user;
+```bash
+git clone <repository-url>
+cd execution-os-backend
 ```
 
-### Run
+### Build the Project
+
+```bash
+./mvnw clean package
+```
+
+On Windows:
+
+```powershell
+.\mvnw.cmd clean package
+```
+
+### Run the Application
+
+```bash
+./mvnw spring-boot:run
+```
+
+On Windows:
 
 ```powershell
 .\mvnw.cmd spring-boot:run
 ```
 
-The API starts on `http://localhost:8080`.
+---
 
-### Test
+## Configuration
 
-```powershell
-.\mvnw.cmd test
-```
+The application supports local file-based configuration and containerized environment-variable configuration.
 
-## Authentication
+### Local Defaults
 
-All endpoints except `/api/v1/auth/**` require:
+Current defaults in `application.yaml`:
+
+| Variable | Default |
+| --- | --- |
+| `spring.datasource.url` | `jdbc:postgresql://localhost:5432/execution_os` |
+| `spring.datasource.username` | `execution_user` |
+| `spring.datasource.password` | `secure123` |
+| `spring.jpa.hibernate.ddl-auto` | `update` |
+| `spring.jpa.show-sql` | `true` |
+| `server.port` | `8080` |
+
+### Docker Environment Variables
+
+The Docker Compose setup injects:
+
+| Variable | Value |
+| --- | --- |
+| `SPRING_DATASOURCE_URL` | `jdbc:postgresql://postgres:5432/execution_os` |
+| `SPRING_DATASOURCE_USERNAME` | `execution_user` |
+| `SPRING_DATASOURCE_PASSWORD` | `secure123` |
+
+---
+
+## API Snapshot
+
+### Auth Endpoints
+
+- `POST /api/v1/auth/register`
+- `POST /api/v1/auth/login`
+
+### Task Endpoints
+
+- `POST /api/v1/tasks`
+- `GET /api/v1/tasks`
+- `GET /api/v1/tasks/{taskId}/streak`
+- `GET /api/v1/tasks/leaderboard`
+
+### Execution Endpoints
+
+- `POST /api/v1/tasks/{taskId}/execution`
+- `GET /api/v1/tasks/{taskId}/execution`
+
+---
+
+## Security
+
+- All endpoints except `/api/v1/auth/**` require authentication
+- JWT bearer tokens are validated by a custom `JwtFilter`
+- Authenticated user identity is derived from the token subject
+- Cross-user task execution is rejected at service level
+
+Example header:
 
 ```http
 Authorization: Bearer <jwt-token>
 ```
 
-The JWT subject is the user UUID and the token lifetime is 24 hours.
+---
 
-## Domain Model
+## Testing
 
-### User
+The project includes:
 
-- `id: UUID`
-- `email: String`
-- `password: String`
-- `createdAt: LocalDateTime`
+- Service-layer unit tests for `TaskServiceImpl`
+- Service-layer unit tests for `ExecutionService`
+- Controller-layer `MockMvc` tests for:
+  - `AuthController`
+  - `TaskController`
+  - `ExecutionController`
 
-### Task
+Run tests with:
 
-- `id: UUID`
-- `title: String`
-- `description: String | null`
-- `frequency: DAILY | WEEKLY | MONTHLY`
-- `deadline: LocalDate | null`
-- `priority: LOW | MEDIUM | HIGH`
-- `status: PENDING | DONE | FAILED`
-- `createdAt: LocalDateTime`
-
-### Execution Log
-
-- `id: UUID`
-- `task: Task`
-- `date: LocalDate`
-- `status: DONE | MISSED`
-
-The database enforces one execution log per `task_id` and `date`.
-
-## API
-
-### Auth
-
-#### `POST /api/v1/auth/register`
-
-Request body:
-
-```json
-{
-  "email": "user@example.com",
-  "password": "secret123"
-}
+```bash
+./mvnw test
 ```
 
-Response:
+On Windows:
 
-```text
-User registered
+```powershell
+.\mvnw.cmd test
 ```
 
-#### `POST /api/v1/auth/login`
+---
 
-Request body:
+## CI Pipeline
 
-```json
-{
-  "email": "user@example.com",
-  "password": "secret123"
-}
-```
+The repository is **CI-ready**, but a GitHub Actions workflow is not currently committed in this codebase.
 
-Response:
+A typical backend CI pipeline for this project should include:
 
-```text
-<jwt-token>
-```
+1. Checkout source
+2. Set up Java 17
+3. Run Maven tests
+4. Build the Spring Boot JAR
+5. Build the Docker image
+6. Optionally publish the image to a container registry
 
-### Tasks
+---
 
-#### `POST /api/v1/tasks`
+## Future Improvements
 
-Creates a task for the authenticated user.
+- Externalize the JWT secret into environment configuration
+- Add Flyway or Liquibase database migrations
+- Add update and delete task endpoints
+- Add ownership checks for every task-derived analytics endpoint
+- Add a real CI workflow under `.github/workflows/`
+- Introduce profile-based production configuration
 
-Request body:
+---
 
-```json
-{
-  "title": "Write daily report",
-  "description": "Submit progress report before 6 PM",
-  "frequency": "DAILY",
-  "deadline": "2026-04-30",
-  "priority": "HIGH"
-}
-```
+## Author
 
-Notes:
-
-- `title` is required and trimmed before save
-- `frequency` is required
-- `priority` defaults to `MEDIUM` if omitted
-- `status` is always created as `PENDING`
-- duplicate titles are blocked per user, case-insensitively
-
-Response:
-
-```json
-{
-  "id": "task-uuid",
-  "title": "Write daily report",
-  "description": "Submit progress report before 6 PM",
-  "frequency": "DAILY",
-  "deadline": "2026-04-30",
-  "priority": "HIGH",
-  "status": "PENDING",
-  "createdAt": "2026-04-06T10:00:00"
-}
-```
-
-#### `GET /api/v1/tasks`
-
-Returns the authenticated user's tasks.
-
-Optional query parameters:
-
-- `status=PENDING|DONE|FAILED`
-- `priority=LOW|MEDIUM|HIGH`
-
-Example:
-
-```http
-GET /api/v1/tasks?status=PENDING&priority=HIGH
-```
-
-#### `GET /api/v1/tasks/{taskId}/streak`
-
-Returns streak metrics for a task:
-
-```json
-{
-  "taskId": "task-uuid",
-  "currentStreak": 3,
-  "longestStreak": 7,
-  "consistency": 75.0
-}
-```
-
-#### `GET /api/v1/tasks/leaderboard?page=0&size=5`
-
-Returns a consistency leaderboard:
-
-```json
-[
-  {
-    "userId": "user-uuid",
-    "consistencyScore": 82.5
-  }
-]
-```
-
-### Execution Logs
-
-#### `POST /api/v1/tasks/{taskId}/execution`
-
-Creates today's execution log for the task owned by the authenticated user.
-
-Request body:
-
-```json
-{
-  "status": "DONE"
-}
-```
-
-Allowed values:
-
-- `DONE`
-- `MISSED`
-
-Response:
-
-```json
-{
-  "date": "2026-04-06",
-  "status": "DONE"
-}
-```
-
-#### `GET /api/v1/tasks/{taskId}/execution`
-
-Returns all execution logs for the task owned by the authenticated user.
-
-Response:
-
-```json
-[
-  {
-    "date": "2026-04-04",
-    "status": "DONE"
-  },
-  {
-    "date": "2026-04-05",
-    "status": "MISSED"
-  }
-]
-```
-
-## Error Handling
-
-Global exception handling returns a structured payload for common failures:
-
-```json
-{
-  "status": 400,
-  "message": "Invalid request payload",
-  "method": "POST",
-  "path": "/api/v1/tasks"
-}
-```
-
-Implemented mappings include:
-
-- `400 Bad Request` for validation, enum parsing, and malformed payloads
-- `401 Unauthorized` for invalid login credentials
-- `403 Forbidden` for cross-user task access
-- `404 Not Found` when a user or task does not exist
-- `409 Conflict` for duplicate tasks and data integrity conflicts
-- `500 Internal Server Error` for unhandled runtime failures
-
-## Codebase Notes
-
-This README reflects the code currently in the repository, including a few implementation details worth knowing:
-
-- registration does not currently block duplicate emails before hitting the database constraint
-- auth responses are plain strings, not JSON objects
-- there are no update or delete endpoints for tasks
-- execution logs are always written for `LocalDate.now()`; clients cannot submit a custom date
-- task streak lookup does not verify task ownership before computing metrics
-- leaderboard pagination is applied before global sorting, so it is page-scoped rather than a true global ranking
-- the JWT secret is hardcoded in the application code
-- schema management currently relies on `spring.jpa.hibernate.ddl-auto=update`
-
-## Suggested Next Steps
-
-- move database and JWT secrets to environment-based configuration
-- add Flyway or Liquibase migrations
-- add DTOs for auth requests and responses
-- add update and delete task endpoints
-- secure streak queries with ownership checks
-- expand automated tests beyond the default application context test
+**Abinash Nayak**  
+Java Backend Developer  
+GitHub: [Aj-world](https://github.com/Aj-world)
