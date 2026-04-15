@@ -6,11 +6,16 @@ spring:
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/execution_os}
     username: ${SPRING_DATASOURCE_USERNAME:execution_user}
     password: ${SPRING_DATASOURCE_PASSWORD:secure123}
+    driver-class-name: org.postgresql.Driver
 
   jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
       ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:update}
     show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
 
 server:
   port: ${PORT:8080}
