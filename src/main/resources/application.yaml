@@ -20,6 +20,24 @@ spring:
 server:
   port: ${PORT:8080}
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
+  info:
+    env:
+      enabled: true
+
+info:
+  app:
+    name: Execution OS Backend
+    description: Production monitoring endpoints
+    version: 0.0.1-SNAPSHOT
+
 springdoc:
   swagger-ui:
     path: /swagger-ui.html
