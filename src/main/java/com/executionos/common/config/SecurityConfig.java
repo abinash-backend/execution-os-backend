@@ -31,27 +31,30 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
         http
-                // Disable CSRF because we are using JWT
+
+                // Disable CSRF because JWT is used
                 .csrf(csrf -> csrf.disable())
 
-                // Stateless session for JWT authentication
+                // Use stateless session (JWT based authentication)
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
 
-                // API authorization rules
+                // Configure endpoint authorization
                 .authorizeHttpRequests(auth -> auth
 
                         // Public endpoints
                         .requestMatchers(
                                 "/",
                                 "/api/v1/auth/**",
+                                "/api/system/**",
+                                "/actuator/**",
                                 "/v3/api-docs/**",
                                 "/swagger-ui/**",
                                 "/swagger-ui.html"
                         ).permitAll()
 
-                        // All other APIs require authentication
+                        // All other endpoints require authentication
                         .anyRequest().authenticated()
                 )
 
