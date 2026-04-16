@@ -1,4 +1,4 @@
-# Execution OS Backend
+[# Execution OS Backend
 
 ![Java](https://img.shields.io/badge/Java-17-orange?style=for-the-badge&logo=openjdk)
 ![Spring Boot](https://img.shields.io/badge/Spring_Boot-3-brightgreen?style=for-the-badge&logo=springboot)
@@ -11,7 +11,18 @@
 ![Docker](https://img.shields.io/badge/Container-Docker-2496ED?style=for-the-badge&logo=docker)
 
 ---
+## Live API
 
+Swagger API Documentation  
+[Open Swagger UI](https://execution-os-backend-latest.onrender.com/swagger-ui/index.html)
+
+System Health Endpoint  
+[Check API Health](https://execution-os-backend-latest.onrender.com/api/system/health)
+
+GitHub Repository  
+[GitHub Repository](https://github.com/abinash-backend/execution-os-backend)
+
+---
 ## About
 
 **Execution OS Backend** is a Spring Boot 3 REST API for personal execution tracking. It provides secure APIs for user authentication, task management, daily execution logging, streak analytics, and leaderboard generation.
@@ -188,6 +199,7 @@ OpenAPI JSON is available at:
 `http://localhost:8080/v3/api-docs`
 
 ---
+
 
 ## Docker Setup
 
@@ -446,3 +458,4 @@ Render will pull the latest Docker image from Docker Hub and start the container
 **Abinash Nayak**  
 Java Backend Developer  
 GitHub: [Aj-world](https://github.com/Aj-world)
+]()
