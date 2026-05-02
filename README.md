@@ -1,4 +1,4 @@
-[# Execution OS Backend
+# Execution OS Backend
 
 ![Java](https://img.shields.io/badge/Java-17-orange?style=for-the-badge&logo=openjdk)
 ![Spring Boot](https://img.shields.io/badge/Spring_Boot-3-brightgreen?style=for-the-badge&logo=springboot)
@@ -62,6 +62,7 @@ The application is organized as a **layered modular monolith**, where each busin
 | `task` | Task creation, retrieval, filtering, streak calculation, and leaderboard computation |
 | `execution` | Daily execution logging, duplicate-per-day prevention, and execution history retrieval |
 | `common` | Shared configuration, JWT security, exception handling, and utility enums |
+| `system` | Root and health endpoints for service availability checks |
 
 ---
 
@@ -210,6 +211,7 @@ The project includes:
 - Persistent PostgreSQL volume
 - Database health check using `pg_isready`
 - Spring datasource configuration through environment variables
+- PostgreSQL exposed on host port `5433`
 
 Run the full system with:
 
@@ -238,6 +240,7 @@ execution-os-backend/
 |   |   |           |-- auth/
 |   |   |           |-- common/
 |   |   |           |-- execution/
+|   |   |           |-- system/
 |   |   |           |-- task/
 |   |   |           `-- ExecutionOsBackendApplication.java
 |   |   `-- resources/
@@ -405,10 +408,11 @@ On every push to `main`, GitHub Actions will:
 
 1. Checkout the repository
 2. Set up Java 17 with Maven dependency caching
-3. Run `./mvnw -B clean verify`
+3. Run `./mvnw -B clean package -DskipTests`
 4. Build the Docker image from the root `Dockerfile`
 5. Log in to Docker Hub using repository secrets
 6. Push the image as `<dockerhub-username>/execution-os-backend:latest`
+7. Trigger a Render deploy hook
 
 ### Required GitHub Secrets
 
@@ -418,6 +422,7 @@ Configure these repository secrets under `Settings -> Secrets and variables -> A
 | --- | --- |
 | `DOCKER_USERNAME` | Docker Hub username |
 | `DOCKER_PASSWORD` | Docker Hub password or access token |
+| `RENDER_DEPLOY_HOOK` | Render deploy hook URL |
 
 ### Render Deployment From Docker Hub
 
@@ -448,7 +453,6 @@ Render will pull the latest Docker image from Docker Hub and start the container
 - Add Flyway or Liquibase database migrations
 - Add update and delete task endpoints
 - Add ownership checks for every task-derived analytics endpoint
-- Add a real CI workflow under `.github/workflows/`
 - Introduce profile-based production configuration
 
 ---
@@ -458,4 +462,3 @@ Render will pull the latest Docker image from Docker Hub and start the container
 **Abinash Nayak**  
 Java Backend Developer  
 GitHub: [Aj-world](https://github.com/Aj-world)
-]()
